@@ -2,7 +2,8 @@ const Screen = require("./screen");
 
 class Cursor {
 
-  constructor(numRows, numCols) {
+  constructor(numRows, numCols)
+  {
     this.numRows = numRows;
     this.numCols = numCols;
 
@@ -13,11 +14,13 @@ class Cursor {
     this.cursorColor = 'yellow';
   }
 
-  resetBackgroundColor() {
+  resetBackgroundColor()
+  {
     Screen.setBackgroundColor(this.row, this.col, this.gridColor);
   }
 
-  setBackgroundColor() {
+  setBackgroundColor()
+  {
     Screen.setBackgroundColor(this.row, this.col, this.cursorColor);
   }
 

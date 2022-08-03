@@ -3,7 +3,8 @@ const Cursor = require("./cursor");
 
 class TTT {
 
-  constructor() {
+  constructor()
+  {
 
     this.playerTurn = "O";
 
@@ -60,7 +61,8 @@ class TTT {
     Screen.render();
   }
 
-  static checkWin(grid) {
+  static checkWin(grid)
+  {
 
     // Return 'X' if player X wins
     // Return 'O' if player O wins
@@ -240,7 +242,8 @@ class TTT {
 
 
 
-  static isFilled(grid) {
+  static isFilled(grid)
+  {
     // go through entire grid to see if it is filled;
     for (let i = 0; i < 3; i++)
     {
@@ -255,7 +258,8 @@ class TTT {
     return true;
   }
 
-  static endGame(winner) {
+  static endGame(winner)
+  {
     if (winner === 'O' || winner === 'X') {
       Screen.setMessage(`Player ${winner} wins!`);
     } else if (winner === 'T') {

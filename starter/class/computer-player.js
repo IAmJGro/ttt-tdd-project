@@ -1,7 +1,9 @@
 
 class ComputerPlayer {
 
-  static getValidMoves(grid) {
+  static getValidMoves(grid)
+  {
+    // gets a list of open spaces
     let validMoves = [];
     for (let row = 0; row < grid.length; row++)
     {
@@ -16,42 +18,48 @@ class ComputerPlayer {
     return validMoves;
   }
 
-  static randomMove(grid) {
-
+  static randomMove(grid)
+  {
+    // just any valid move
     let validMoves = this.getValidMoves(grid);
     let moveNumber = Math.floor(Math.random() * validMoves.length);
     return validMoves[moveNumber];
   }
 
-  static getWinningMoves(grid, symbol) {
-
-    let winner = this.checkHorizontalWinner(grid, symbol);
-    console.log(winner);
-    if (winner)
+  static getWinningMoves(grid, symbol)
+  {
+    // gets an array of winning moves rather than a single one b/c
+    // that helps function that avoids opponent double winning move situations
+    let winningMoves = [];
+    let horizWinner = this.checkHorizontalWinner(grid, symbol);
+    if (horizWinner)
     {
-      return winner;
+      winningMoves.push(horizWinner);
     }
 
-    winner = this.checkVerticalWinner(grid, symbol);
-    console.log(winner);
-    if (winner)
+    let vertWinner = this.checkVerticalWinner(grid, symbol);
+    if (vertWinner)
     {
-      return winner;
+      winningMoves.push(vertWinner);
     }
 
-    winner = this.checkDiagWinner(grid, symbol);
-    console.log(winner);
-    if (winner)
+    let diagWinner = this.checkDiagWinner(grid, symbol);
+    if (diagWinner)
     {
-      return winner;
+      winningMoves.push(diagWinner);
     }
 
-    console.log("no winner");
+    if (winningMoves.length > 0)
+    {
+      return winningMoves;
+    }
     return false;
   }
 
-  static checkHorizontalWinner(grid, symbol) {
-
+  static checkHorizontalWinner(grid, symbol)
+  {
+    // checks to see if there are any rows with two of symbol and a blank
+    // returns the blank as the winning move
     for (let row = 0; row < grid.length; row++)
     {
       let symbols = 0;
@@ -75,8 +83,10 @@ class ComputerPlayer {
     return false;
   }
 
-  static checkVerticalWinner(grid, symbol) {
-
+  static checkVerticalWinner(grid, symbol)
+  {
+    // checks to see if there are any columns with two of symbol and a blank
+    // returns winning moves
     // assumes that grid lines are of equal length
     for (let col = 0; col < grid[0].length; col++)
     {
@@ -101,9 +111,10 @@ class ComputerPlayer {
     return false;
   }
 
-  static checkDiagWinner(grid, symbol) {
-
-    // assumes square grid, checks backslash
+  static checkDiagWinner(grid, symbol)
+  {
+    // assumes square grid, checks backslash for two of symbol and a blank
+    // returns blank
     let symbols = 0;
     let emptyLocation = null;
     for (let loc = 0; loc < grid.length; loc++)
@@ -119,20 +130,23 @@ class ComputerPlayer {
     }
     if (symbols === 2 && emptyLocation)
     {
-      return emptyLocation;
+       return emptyLocation;
     }
 
-    //check forward slash
-
-    for (let loc = 0; loc < grid.length; loc++)
+    // check forward slash
+    // looks for two symbols and a blank, returns blank
+    symbols = 0;
+    emptyLocation = null;
+    for (let row = 0; row < grid.length; row++)
     {
-      if (grid[loc][grid.length - loc - 1] === symbol)
+      let col = (grid.length - 1) - row;
+      if (grid[row][col] === symbol)
       {
         symbols++;
       }
-      else if (grid[loc][grid.length - loc - 1] === ' ')
+      else if (grid[row][col] === ' ')
       {
-        emptyLocation = {row: loc, col: grid.length - loc - 1};
+        emptyLocation = {row: row, col: col};
       }
     }
     if (symbols === 2 && emptyLocation)
@@ -143,15 +157,9 @@ class ComputerPlayer {
     return false;
   }
 
-
-  static getBlockingMoves(grid, symbol)
-  {
-    let opposingSymbol = this.getOpposingSymbol(symbol);
-    return this.getWinningMoves(grid, opposingSymbol);
-  }
-
   static getOpposingSymbol(symbol)
   {
+    // just flips the symbol to check for defensive moves
     if (symbol === "X")
     {
       symbol = "O";
@@ -163,60 +171,115 @@ class ComputerPlayer {
     return symbol;
   }
 
-  static checkCorners(grid, opposingSymbol)
+  static blockDoubleWinner(grid, opposingSymbol)
   {
-    if (grid[0][0] === opposingSymbol && grid[2][2] === " ")
+    // checks hypothetical next moves from opponent that would create
+    // a situation in which they would win twice
+    // returns that location so that AI will place its next mark there
+    for (let row = 0; row < grid.length; row++)
     {
-      return {row: 2, col: 2}
+      for (let col = 0; col < grid[row].length; col++)
+      {
+        if (grid[row][col] === " ")
+        {
+          grid[row][col] = opposingSymbol;
+          let winners = this.getWinningMoves(grid, opposingSymbol);
+          grid[row][col] = " ";
+          if (winners.length > 1)
+          {
+            return {row: row, col: col};
+          }
+        }
+      }
     }
-    if (grid[2][2] === opposingSymbol && grid[0][0] === " ")
+    return false;
+  }
+
+  static getMoveNumber(grid)
+  {
+    // returns the move number, starting at move #1, based on number of marks
+    // on the board
+    let moveNumber = 1;
+    for (let i = 0; i < grid.length; i++)
     {
-      return {row: 0, col: 0}
+      for (let j = 0; j < grid[i].length; j++)
+      {
+        if (grid[i][j] !== ' ')
+        {
+          moveNumber++;
+        }
+      }
     }
-    if (grid[0][2] === opposingSymbol && grid[2][0] === " ")
+    return moveNumber;
+  }
+
+  static getSpecialMove(grid, opposingSymbol)
+  {
+    // if AI is going second and opponent takes center
+    // must take corner. If opponent can does,
+    // will have two potential double winner moves and be unblockable
+    let moveNumber = this.getMoveNumber(grid);
+    if (moveNumber === 2 && grid[1][1] === opposingSymbol)
     {
-      return {row: 2, col: 0}
+      return {row: 0, col: 0};
     }
-    if (grid[2][0] === opposingSymbol && grid[0][2] === " ")
+    // program will ALWAYS place AI mark in center if opponent doesn't start there
+    // if opponent has the two corners, they have two potential double winners
+    // to avoid loss here, force opponent to defend against winning moves with
+    // a move that doesn't set up a double winner - any side rather than corner
+    // will work
+    if (moveNumber === 4 &&
+        (grid[0][0] === opposingSymbol && grid[2][2] === opposingSymbol ||
+         grid[2][0] === opposingSymbol && grid[0][2] === opposingSymbol))
     {
-      return {row: 0, col: 2}
+      return {row: 0, col: 1};
     }
   }
 
-  static getSmartMove(grid, symbol) {
-
+  static getSmartMove(grid, symbol)
+  {
+    // first priority: win if winning move available
     let winner = this.getWinningMoves(grid, symbol)
     if (winner)
     {
-      return winner;
+      return winner[0];
     }
 
-    let block = this.getBlockingMoves(grid, symbol)
+    // just getting opposing player's symbol for ease
+    let opposingSymbol = this.getOpposingSymbol(symbol);
+
+    // second priority: block any immediately winning move
+    // subsequent sections should make it so there are never two winning moves
+    let block = this.getWinningMoves(grid, opposingSymbol)
     if (block)
     {
-      return block;
+      return block[0];
     }
 
-    // best first move for O
-    if (symbol === "O" && grid[1][1] === " ")
+    // two special cases for responses to early moves to prevent definite
+    // wins for opponent must come before blockDW b/c trying to block a double
+    // winner when opponent has both corners will make AI lose
+    let specialMove = this.getSpecialMove(grid, opposingSymbol);
+    if (specialMove)
+    {
+      return specialMove;
+    }
+
+    // third priority: block any move that will result into possible winning
+    // moves for opponent
+    let blockDW = this.blockDoubleWinner(grid, opposingSymbol)
+    if (blockDW)
+    {
+      return blockDW;
+    }
+
+    // if nothing more pressing, take the center
+    if (grid[1][1] === " ")
     {
       return {row: 1, col: 1};
     }
 
-    // best first move for X
-    if (symbol === "X" && grid[0][0] === " ")
-    {
-      return {row: 0, col: 0};
-    }
-
-    let opposingSymbol = this.getOpposingSymbol(symbol);
-
-    let oppositeCorner = this.checkCorners(grid, opposingSymbol);
-    if (oppositeCorner)
-    {
-      return oppositeCorner;
-    }
-
+    // if nothing more pressing just do something random
     return this.randomMove(grid);
   }
 
