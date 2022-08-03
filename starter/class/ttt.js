@@ -1,5 +1,6 @@
 const Screen = require("./screen");
 const Cursor = require("./cursor");
+const ComputerPlayer = require ("./computer-player");
 
 class TTT {
 
@@ -14,6 +15,8 @@ class TTT {
 
     this.cursor = new Cursor(3, 3);
 
+    // by default no computer marker
+    this.computerMarker = "";
     // Initialize a 3x3 tic-tac-toe grid
     Screen.initialize(3, 3);
     Screen.setGridlines(true);
@@ -23,42 +26,67 @@ class TTT {
     Screen.addCommand('a', 'move cursor left', this.cursor.left);
     Screen.addCommand('s', 'move cursor down', this.cursor.down);
     Screen.addCommand('d', 'move cursor right', this.cursor.right);
+    Screen.addCommand('o', 'switch whether against AI', this.setAI);
     Screen.addCommand('e', 'place marker', this.placeMarker);
-    Screen.setMessage(`${this.playerTurn}'s turn\nwasd to move, e to place marker`);
+    Screen.setMessage(`${this.playerTurn}'s turn\nwasd to move, e to place marker, o to switch whether against AI\nAI Marker: ${this.computerMarker}`);
 
     this.cursor.setBackgroundColor();
     Screen.render();
   }
 
 
+  setAI = () => {
+    if (this.computerMarker === "")
+    {
+      this.computerMarker = ComputerPlayer.getOpposingSymbol(this.playerTurn);
+    }
+    else
+    {
+      this.computerMarker = "";
+    }
+    Screen.setMessage(`${this.playerTurn}'s turn\nwasd to move, e to place marker, o to switch whether against AI\nAI Marker: ${this.computerMarker}`);
+    Screen.render();
+  }
+
   placeMarker = () => {
     let row = this.cursor.row;
     let col = this.cursor.col;
     if (this.grid[row][col] === ' ')
     {
-      if (this.playerTurn === "O")
-      {
-        this.grid[row][col] = "O";
-        Screen.setGrid(row, col, "O");
-        this.playerTurn = "X";
-      } else {
-        this.grid[row][col] = "X";
-        Screen.setGrid(row, col, "X");
-        this.playerTurn = "O";
-     }
-     Screen.setMessage(`${this.playerTurn}'s turn\nwasd to move, e to place marker`);
+      this.grid[row][col] = this.playerTurn;
+      Screen.setGrid(row, col, this.playerTurn);
+      this.playerTurn = ComputerPlayer.getOpposingSymbol(this.playerTurn);
+
+     Screen.setMessage(`${this.playerTurn}'s turn\nwasd to move, e to place marker, o to switch whether against AI\nAI Marker: ${this.computerMarker}`);
     }
     else
     {
-      Screen.setMessage(`${this.playerTurn}'s turn\nwasd to move, e to place marker\nInvalid move`);
+      Screen.setMessage(`${this.playerTurn}'s turn\nwasd to move, e to place marker, o to switch whether against AI\nAI Marker: ${this.computerMarker}\nInvalid move`);
     }
     let winner = TTT.checkWin(this.grid)
     if (winner)
     {
       TTT.endGame(winner);
     }
-
+    if (this.playerTurn === this.computerMarker)
+    {
+      this.computerMove();
+    }
     Screen.render();
+  }
+
+  computerMove()
+  {
+    let computerMove = ComputerPlayer.getSmartMove(this.grid, this.computerMarker);
+    this.grid[computerMove.row][computerMove.col] = this.computerMarker;
+    Screen.setGrid(computerMove.row, computerMove.col, this.computerMarker);
+    this.playerTurn = ComputerPlayer.getOpposingSymbol(this.playerTurn);
+    Screen.setMessage(`${this.playerTurn}'s turn\nwasd to move, e to place marker, o to switch whether against AI\nAI Marker: ${this.computerMarker}`);
+    let winner = TTT.checkWin(this.grid)
+    if (winner)
+    {
+      TTT.endGame(winner);
+    }
   }
 
   static checkWin(grid)
